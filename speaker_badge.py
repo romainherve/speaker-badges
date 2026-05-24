@@ -328,14 +328,15 @@ def back_shell():
     # bottom rests on the perimeter wall.
     solid += _walls(ESP_W, ESP_H, ESP_CXY, WALL, BACK_POCKET_TOP, ["+x", "-x"])
 
-    # Battery side ribs (+x / -x). Built explicitly rather than via _walls: _walls
-    # extends each rib a wall-thickness past the footprint, and for the battery
-    # (the lowest module) that overshoot would poke through the body's bottom face.
-    # Here the bottom end stops INSIDE the perimeter wall (merged, no protrusion),
-    # while still backing the full length of the battery's sides.
+    # Battery side ribs (+x / -x). Built explicitly rather than via _walls, and
+    # stopped ~4 mm ABOVE the bottom insert bosses so the ribs don't run down
+    # alongside the inserts (per the design review) — the bosses stand free for
+    # clean heat-set access. The rib backs the upper ~2/3 of the battery's sides;
+    # the bottom corners are located by the bosses + the perimeter wall. (Free rib
+    # ends just add footprint loops to the floor face — verified NOT through-holes.)
     rib_x = BAT_W / 2 + FIT_CLEAR + RIB_T / 2
-    rib_top = BAT_CXY[1] + BAT_H / 2 + FIT_CLEAR + RIB_T   # +y end (matches _walls)
-    rib_bot = -(H / 2 - WALL / 2)                          # ends mid-perimeter-wall
+    rib_top = BAT_CXY[1] + BAT_H / 2 + FIT_CLEAR + RIB_T          # +y end (matches _walls)
+    rib_bot = -(H / 2 - SCREW_INSET) + BOSS_OD / 2 + 4.0          # ~4 mm above the bosses
     for sx in (-1, 1):
         solid += Pos(sx * rib_x, (rib_top + rib_bot) / 2, (WALL + BACK_POCKET_TOP) / 2) * Box(
             RIB_T, rib_top - rib_bot, BACK_POCKET_TOP - WALL
