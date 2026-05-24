@@ -1,0 +1,10 @@
+# Python virtual env (large, recreate locally)
+.venv/
+__pycache__/
+*.pyc
+
+# Render-viewer cache artifacts
+*.glb
+
+# macOS
+.DS_Store
