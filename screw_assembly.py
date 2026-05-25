@@ -38,7 +38,9 @@ def _inserts():
 def gen_step():
     front = sb.front_shell()
     front.label = "front_shell"
-    back = Pos(0, 0, sb.TOTAL_T) * mirror(sb.back_shell(), about=Plane.XY)
+    # Close the case by FLIPPING the back shell about Y (180°), as you would
+    # physically — not mirroring it. (x -> -x; the back's ports are pre-mirrored.)
+    back = Pos(0, 0, sb.TOTAL_T) * Rotation(0, 180, 0) * sb.back_shell()
     back.label = "back_shell"
     children = [front, back]
     for i, s in enumerate(_screws()):

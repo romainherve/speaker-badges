@@ -28,7 +28,6 @@ from build123d import (
     Compound,
     Cone,
     Cylinder,
-    GeomType,
     Plane,
     Pos,
     Rectangle,
@@ -38,6 +37,7 @@ from build123d import (
     chamfer,
     extrude,
     fillet,
+    mirror,
     offset,
 )
 
@@ -59,10 +59,12 @@ CAVITY_TOP = H / 2 - HEADER_H   # cavity stops here; header above stays solid
 SCREEN_CUTOUT_DIA = 45.0   # covers the viewable area + small margin
 SCREEN_CY = 7.0            # below lanyard, sized to fit bulge
 
-# --- Bezel recess around screen (stepped face) ---
-BEZEL_DIA = 50.0           # 2.5 mm rim around the screen cutout
-BEZEL_DEPTH = 1.5          # recessed below the outer face
-BEZEL_LIP_FILLET = 0.4     # soft transition at the recess entry
+# --- Bezel: 45° chamfer around the screen opening ---
+# A chamfer (not a flat recess) so the front shell prints FACE-DOWN with no
+# support: the bevel backs the lip the glass rests on, instead of leaving it
+# floating over an undercut recess. 45° (= printable overhang); Ø48 at the face
+# tapering to the Ø45 viewable opening.
+BEZEL_CHAMFER = 1.5        # 45° chamfer leg: 1.5 mm deep and 1.5 mm radial
 
 # --- Exterior edge fillet (rounded outer edges, mating face stays flat) ---
 EDGE_FILLET = 1.5
@@ -109,8 +111,10 @@ INSERT_LEADIN_DEPTH = 0.6
 BOSS_OD = 5.0              # ≥0.9 mm wall around the insert; merges into the perimeter wall
 
 # Edge ports/buttons are given in GLOBAL z (0 = front face); they straddle the
-# mid-plane seam so each shell cuts its own portion. Back-shell-native z is
-# TOTAL_T - global z.
+# mid-plane seam so each shell cuts its own portion. The back shell is FLIPPED
+# about the vertical (Y) axis to close the case, which swaps X (left<->right), so
+# its cuts are mirrored in X and use native z = TOTAL_T - global z. (A flip, not a
+# reflection — you can't print a mirrored part.)
 USB_GZ = TOTAL_T / 2       # USB-C centered in the thickness
 USB_W = 11.0               # opening width (along X)
 USB_H = 6.5                # opening height (along Z) — clears the plug overmold
@@ -271,17 +275,16 @@ def front_shell():
     """Front shell (z=0 exterior .. z=T_FRONT seam): screen + TP4056 + SD."""
     solid = _shell_body(T_FRONT)
 
-    # Bezel recess + softened rim
-    solid -= Pos(0, SCREEN_CY, 0) * extrude(Circle(BEZEL_DIA / 2), BEZEL_DEPTH)
-    bezel_rim = [
-        e for e in solid.edges()
-        if e.geom_type == GeomType.CIRCLE and abs(e.radius - BEZEL_DIA / 2) < 0.05
-    ]
-    if bezel_rim:
-        solid = fillet(bezel_rim, radius=BEZEL_LIP_FILLET)
-
-    # Screen cutout + M2 clearance through-holes & 90° head countersinks
+    # Screen cutout + 45° chamfered bezel. The chamfer (not a flat recess) leaves
+    # the glass-retaining lip backed by solid wall, so the shell prints face-down
+    # with no support; the bevel also reads as a clean screen surround.
     solid -= Pos(0, SCREEN_CY, 0) * extrude(Circle(SCREEN_CUTOUT_DIA / 2), T_FRONT)
+    solid -= Pos(0, SCREEN_CY, 0) * Cone(
+        SCREEN_CUTOUT_DIA / 2 + BEZEL_CHAMFER, SCREEN_CUTOUT_DIA / 2, BEZEL_CHAMFER,
+        align=(Align.CENTER, Align.CENTER, Align.MIN),
+    )
+
+    # M2 clearance through-holes & 90° head countersinks
     for x, y in _corners():
         solid -= Pos(x, y, 0) * extrude(Circle(M2_CLEAR_DIA / 2), T_FRONT)
         # countersink: cone wide (Ø4.4) at the screen face, narrowing to the
@@ -342,10 +345,12 @@ def back_shell():
             RIB_T, rib_top - rib_bot, BACK_POCKET_TOP - WALL
         )
 
-    # Edge ports / buttons (back-shell portion; native z = TOTAL_T - global)
-    solid -= _usb_cut(TOTAL_T - USB_GZ)
-    solid -= _sd_cut(TOTAL_T - SD_GZ)
-    solid -= _button_cuts(TOTAL_T - BTN_GZ)
+    # Edge ports / buttons. The back shell is flipped about Y when the case closes
+    # (x -> -x), so its cuts are MIRRORED in X (about the YZ plane) to line up with
+    # the front shell's ports after the flip. Native z = TOTAL_T - global z.
+    solid -= mirror(_usb_cut(TOTAL_T - USB_GZ), about=Plane.YZ)
+    solid -= mirror(_sd_cut(TOTAL_T - SD_GZ), about=Plane.YZ)
+    solid -= mirror(_button_cuts(TOTAL_T - BTN_GZ), about=Plane.YZ)
 
     # Top-face strap slot + wrap-bar cradle
     solid = _add_strap_mount(solid, T_BACK)

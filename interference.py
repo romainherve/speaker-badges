@@ -7,7 +7,7 @@ can see the gap (or overlap) across the mid-plane seam.
 """
 
 import speaker_badge as sb
-from build123d import Plane, Pos, mirror
+from build123d import Pos, Rotation
 
 
 def zspan(solid, label):
@@ -17,7 +17,7 @@ def zspan(solid, label):
 
 def main():
     front = sb.front_shell()
-    back_assembled = Pos(0, 0, sb.TOTAL_T) * mirror(sb.back_shell(), about=Plane.XY)
+    back_assembled = Pos(0, 0, sb.TOTAL_T) * Rotation(0, 180, 0) * sb.back_shell()
 
     print(f"TOTAL_T={sb.TOTAL_T}  seam at z={sb.T_FRONT}")
     print(f"FRONT_POCKET_TOP={sb.FRONT_POCKET_TOP}  BACK_POCKET_TOP={sb.BACK_POCKET_TOP}  POCKET_GAP={sb.POCKET_GAP}")

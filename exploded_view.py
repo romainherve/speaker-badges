@@ -63,8 +63,8 @@ def gen_step():
     glass.label = "amoled_glass"
     parts.append(glass)
 
-    # Front shell, mirrored so the screen bezel faces up
-    front = Pos(0, 0, 82) * mirror(sb.front_shell(), about=Plane.XY)
+    # Front shell, flipped about Y (as it closes onto the back) so the screen faces up
+    front = Pos(0, 0, 82) * Rotation(0, 180, 0) * sb.front_shell()
     front.label = "front_shell"
     parts.append(front)
 
