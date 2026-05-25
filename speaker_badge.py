@@ -46,8 +46,10 @@ W = 54.0                   # base width (X); floor set by the 50 mm adapter + wa
 H = 105.0                  # body height (Y); sized so the 64.4 mm ESP + battery
                            # stack fits in the cavity below the 7 mm header
 HEADER_H = 7.0             # solid top strip housing the strap slot + internal bar
-BULGE_DIA = 57.0           # gentle bulge (~1.5 mm proud of base) so the screen
-                           # nearly fills the width — screen-forward proportion
+BULGE_DIA = 61.0           # body bulges ~3.5 mm proud of the base around the screen
+                           # for a more substantial side frame (~4.3 mm wall to the
+                           # glass ring) following the screen curve; base still 54
+                           # (holds the adapter), so the bulge is purely the surround
 CORNER_R = 4.0             # smoothing radius for outer silhouette
 WALL = 1.8                 # thinned from 2.0 to keep adapter clearance at W=54
 T_FRONT = 7.25             # even split at the mid-plane (total 14.5 mm)
